@@ -8,6 +8,7 @@ import os
 # SPARQL query to fetch language code and main page title for each Wikipedia language
 sparql_query = """
 SELECT ?language_code ?mainpage_title WHERE {
+  hint:Query hint:optimizer "None".
   ?link schema:about wd:Q5296 ;
         schema:name ?mainpage_title ;
         schema:inLanguage ?language_code ;
