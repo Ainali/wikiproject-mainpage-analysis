@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WikiProject Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .dropdown {
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>WikiProject Analysis</h1>
+    <div class="dropdown">
+        <label for="year-select">Year:</label>
+        <select id="year-select">
+            <option value="all">All</option>
+        </select>
+    </div>
+    <div class="dropdown">
+        <label for="language-select">Language:</label>
+        <select id="language-select">
+            <option value="all">All</option>
+        </select>
+    </div>
+    <div class="dropdown">
+        <label for="wikiproject-select">WikiProject:</label>
+        <select id="wikiproject-select">
+            <option value="all">All</option>
+        </select>
+    </div>
+    <table id="results-table">
+        <thead>
+            <tr>
+                <th>Language</th>
+                <th>WikiProject</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
+    <script>
+        // Function to load CSV files and populate dropdowns and table
+        async function loadAndProcessData() {
+            // Fetch the CSV data for each language and year (adjust the paths as needed)
+            const years = [2023, 2024]; // Example years
+            const languages = ['en', 'sv']; // Example languages
+            let allData = [];
+
+            for (const year of years) {
+                for (const language of languages) {
+                    try {
+                        const response = await fetch(`data/results_${language}_${year}.csv`);
+                        const data = await response.text();
+                        const parsedData = d3.csvParse(data);
+                        parsedData.forEach(d => {
+                            d.year = year;
+                            d.language = language;
+                        });
+                        allData = allData.concat(parsedData);
+                    } catch (error) {
+                        console.log(`Error fetching data for ${language} in ${year}:`, error);
+                    }
+                }
+            }
+
+            // Populate dropdowns
+            const yearSelect = d3.select('#year-select');
+            yearSelect.selectAll('option').data([...new Set(allData.map(d => d.year)), 'all']).enter()
+                .append('option')
+                .attr('value', d => d)
+                .text(d => d);
+
+            const languageSelect = d3.select('#language-select');
+            languageSelect.selectAll('option').data([...new Set(allData.map(d => d.language)), 'all']).enter()
+                .append('option')
+                .attr('value', d => d)
+                .text(d => d);
+
+            const wikiprojectSelect = d3.select('#wikiproject-select');
+            wikiprojectSelect.selectAll('option').data([...new Set(allData.map(d => d.itemLabel)), 'all']).enter()
+                .append('option')
+                .attr('value', d => d)
+                .text(d => d);
+
+            // Function to update the table based on the selected filters
+            function updateTable() {
+                const selectedYear = yearSelect.property('value');
+                const selectedLanguage = languageSelect.property('value');
+                const selectedWikiProject = wikiprojectSelect.property('value');
+
+                const filteredData = allData.filter(d => 
+                    (selectedYear === 'all' || d.year == selectedYear) &&
+                    (selectedLanguage === 'all' || d.language === selectedLanguage) &&
+                    (selectedWikiProject === 'all' || d.itemLabel === selectedWikiProject)
+                );
+
+                const groupedData = d3.nest()
+                    .key(d => d.language)
+                    .key(d => d.itemLabel)
+                    .rollup(v => v.length)
+                    .entries(filteredData);
+
+                const tbody = d3.select('#results-table tbody');
+                tbody.selectAll('tr').remove();
+
+                groupedData.forEach(languageGroup => {
+                    languageGroup.values.forEach(projectGroup => {
+                        tbody.append('tr')
+                            .html(`<td>${languageGroup.key}</td><td>${projectGroup.key}</td><td>${projectGroup.value}</td>`);
+                    });
+                });
+            }
+
+            // Update table when any dropdown changes
+            yearSelect.on('change', updateTable);
+            languageSelect.on('change', updateTable);
+            wikiprojectSelect.on('change', updateTable);
+
+            // Initial table update
+            updateTable();
+        }
+
+        // Load and process data when the page loads
+        loadAndProcessData();
+    </script>
+</body>
+</html>
+
