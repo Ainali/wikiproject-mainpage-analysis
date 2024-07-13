@@ -2,6 +2,7 @@ import requests
 import sys
 from SPARQLWrapper import SPARQLWrapper, JSON
 import pandas as pd
+from datetime import datetime
 
 # Define the URL for the API call
 url = "https://sv.wikipedia.org/w/api.php"
