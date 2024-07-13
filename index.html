@@ -33,6 +33,20 @@
             font-weight: bold;
             background-color: #f9f9f9;
         }
+        .spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -697,6 +711,7 @@
         </select>
     </div>
     </div>
+    <div class="spinner" id="spinner"></div>
     <table id="results-table">
         <thead>
             <tr>
@@ -1047,6 +1062,11 @@
         ];
 
         async function loadAndProcessData() {
+            const spinner = document.getElementById('spinner');
+            const table = document.getElementById('results-table');
+            spinner.style.display = 'block';
+            table.style.display = 'none';
+
             const years = [...new Set(files.map(f => f.year))];
             const languages = [...new Set(files.map(f => f.language))];
 
@@ -1061,6 +1081,9 @@
                 });
                 allData = allData.concat(parsedData);
             }
+
+            spinner.style.display = 'none';
+            table.style.display = 'table';
 
             // Populate dropdowns
             const yearSelect = d3.select('#year-select');
