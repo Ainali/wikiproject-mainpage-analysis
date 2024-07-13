@@ -76,6 +76,19 @@ def create_count_table(results):
     
     return count_table
 
+# Function to save results to a CSV file
+def save_to_csv(count_table):
+    year = datetime.utcnow().year
+    filename = f'data/results_{year}.csv'
+
+    # Check if the file already exists
+    if os.path.exists(filename):
+        # Append new data to the existing file
+        count_table.to_csv(filename, mode='a', header=False, index=False)
+    else:
+        # Create a new file and write the header
+        count_table.to_csv(filename, index=False)
+
 # Main code
 wikibase_items = fetch_wikibase_items(url, params)
 if wikibase_items:
@@ -83,10 +96,9 @@ if wikibase_items:
     endpoint_url = "https://query.wikidata.org/sparql"
     results = run_sparql_query(endpoint_url, sparql_query)
     
-    # Create and display the count table
+    # Create the count table
     count_table = create_count_table(results)
     print(count_table)
     
-    # Save results to a CSV file
-    timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%SZ')
-    count_table.to_csv(f'data/results_{timestamp}.csv', index=False)
+    # Save results to CSV file
+    save_to_csv(count_table)
