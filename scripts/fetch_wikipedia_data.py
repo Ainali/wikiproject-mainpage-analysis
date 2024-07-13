@@ -11,9 +11,10 @@ SELECT ?language_code ?mainpage_title WHERE {
   hint:Query hint:optimizer "None".
   ?link schema:about wd:Q5296 ;
         schema:name ?mainpage_title ;
-        schema:inLanguage ?language_code ;
+        schema:inLanguage ?lang ;
         schema:isPartOf ?wiki .
   ?wiki wikibase:wikiGroup "wikipedia".
+  BIND(REPLACE(SUBSTR(STR(?wiki),9),'.wikipedia.org/','') AS ?language_code)
 } ORDER BY ?language_code
 """
 
