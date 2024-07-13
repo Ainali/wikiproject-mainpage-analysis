@@ -2,7 +2,7 @@ import requests
 import sys
 from SPARQLWrapper import SPARQLWrapper, JSON
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 import os
 
 # SPARQL query to fetch language code and main page title for each Wikipedia language
@@ -81,8 +81,8 @@ def create_count_table(results):
 
 # Function to save results to a CSV file
 def save_to_csv(count_table, language_code):
-    year = datetime.utcnow().year
-    today = datetime.utcnow().date()
+    year = datetime.now(timezone.utc).year
+    today = datetime.now(timezone.utc).date()
     filename = f'data/results_{language_code}_{year}.csv'
 
     # Add date column
