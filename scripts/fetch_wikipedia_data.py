@@ -2,25 +2,28 @@ import requests
 import sys
 from SPARQLWrapper import SPARQLWrapper, JSON
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date
 import os
 
-# Define the URL for the API call
-url = "https://sv.wikipedia.org/w/api.php"
+# SPARQL query to fetch language code and main page title for each Wikipedia language
+sparql_query = """
+SELECT ?language_code ?mainpage_title WHERE {
+  ?link schema:about wd:Q5296 ;
+        schema:name ?mainpage_title ;
+        schema:inLanguage ?language_code ;
+        schema:isPartOf ?wiki .
+  ?wiki wikibase:wikiGroup "wikipedia".
+} ORDER BY ?language_code
+"""
 
-# Define the parameters for the API call of all links at the mainpage
-params = {
-    "action": "query",
-    "format": "json",
-    "prop": "pageprops",
-    "titles": "Portal:Huvudsida",
-    "generator": "links",
-    "formatversion": 2,
-    "ppcontinue": "",
-    "ppprop": "wikibase_item",
-    "gplnamespace": 0,
-    "gpllimit": "max"
-}
+# Function to run a SPARQL query and return results
+def run_sparql_query(endpoint_url, sparql_query):
+    user_agent = "WDQS-example Python/%s.%s" % (sys.version_info[0], sys.version_info[1])
+    sparql = SPARQLWrapper(endpoint_url, agent=user_agent)
+    sparql.setQuery(sparql_query)
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+    return results
 
 # Function to fetch the API response and extract wikibase_item values
 def fetch_wikibase_items(api_url, params):
@@ -51,13 +54,10 @@ def construct_sparql_query(wikibase_items):
     """
     return sparql_query
 
-# Function to run the SPARQL query and return results
-def run_sparql_query(endpoint_url, sparql_query):
-    user_agent = "WDQS-example Python/%s.%s" % (sys.version_info[0], sys.version_info[1])
-    sparql = SPARQLWrapper(endpoint_url, agent=user_agent)
-    sparql.setQuery(sparql_query)
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
+# Function to run the SPARQL query for fetching language codes and main page titles
+def fetch_language_data():
+    endpoint_url = "https://query.wikidata.org/sparql"
+    results = run_sparql_query(endpoint_url, sparql_query)
     return results
 
 # Function to create a table that counts how many times each ?item is returned, including labels
@@ -67,21 +67,21 @@ def create_count_table(results):
         item = result['item']['value'].split('/')[-1]  # Extract item ID
         item_label = result['itemLabel']['value'] if 'itemLabel' in result else ''  # Extract item label
         items.append((item, item_label))
-    
+
     # Create a DataFrame and count occurrences
     df = pd.DataFrame(items, columns=['item', 'itemLabel'])
     count_table = df.groupby(['item', 'itemLabel']).size().reset_index(name='count')
-    
+
     # Sort the table by count in descending order
     count_table = count_table.sort_values(by='count', ascending=False).reset_index(drop=True)
-    
+
     return count_table
 
 # Function to save results to a CSV file
-def save_to_csv(count_table):
+def save_to_csv(count_table, language_code):
     year = datetime.utcnow().year
     today = datetime.utcnow().date()
-    filename = f'data/results_{year}.csv'
+    filename = f'data/results_{language_code}_{year}.csv'
 
     # Add date column
     count_table['date'] = today
@@ -94,16 +94,53 @@ def save_to_csv(count_table):
         # Create a new file and write the header
         count_table.to_csv(filename, index=False)
 
-# Main code
-wikibase_items = fetch_wikibase_items(url, params)
-if wikibase_items:
-    sparql_query = construct_sparql_query(wikibase_items)
-    endpoint_url = "https://query.wikidata.org/sparql"
-    results = run_sparql_query(endpoint_url, sparql_query)
-    
-    # Create the count table
-    count_table = create_count_table(results)
-    print(count_table)
-    
-    # Save results to CSV file
-    save_to_csv(count_table)
+# Main function
+def main():
+    # Fetch language data (language codes and main page titles)
+    results = fetch_language_data()
+
+    # Iterate over each language
+    for result in results["results"]["bindings"]:
+        language_code = result['language_code']['value']
+        mainpage_title = result['mainpage_title']['value']
+
+        print(f"Processing Wikipedia in {language_code}...")
+
+        # Construct API URL and parameters for the specific language
+        api_url = f"https://{language_code}.wikipedia.org/w/api.php"
+        params = {
+            "action": "query",
+            "format": "json",
+            "prop": "pageprops",
+            "titles": mainpage_title,
+            "generator": "links",
+            "formatversion": 2,
+            "ppcontinue": "",
+            "ppprop": "wikibase_item",
+            "gplnamespace": 0,
+            "gpllimit": "max"
+        }
+
+        # Fetch wikibase items for the current language
+        wikibase_items = fetch_wikibase_items(api_url, params)
+
+        if wikibase_items:
+            # Construct SPARQL query
+            sparql_query = construct_sparql_query(wikibase_items)
+            endpoint_url = "https://query.wikidata.org/sparql"
+
+            # Run SPARQL query
+            results = run_sparql_query(endpoint_url, sparql_query)
+
+            # Create count table
+            count_table = create_count_table(results)
+            print(count_table)
+
+            # Save results to CSV file
+            save_to_csv(count_table, language_code)
+
+        print(f"Processing for {language_code} completed.")
+        print("=" * 50)
+
+if __name__ == "__main__":
+    main()
