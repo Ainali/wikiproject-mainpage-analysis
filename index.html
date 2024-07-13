@@ -691,7 +691,7 @@
             <tr>
                 <th>Language</th>
                 <th>WikiProject</th>
-                <th>Count</th>
+                <th onclick="sortTable()">Count</th>
             </tr>
         </thead>
         <tbody>
@@ -1111,6 +1111,19 @@
 
         // Load and process data when the page loads
         loadAndProcessData();
+
+         // Function to sort table by Count column
+        function sortTable() {
+            const table = document.getElementById("results-table");
+            const rows = Array.from(table.rows).slice(1); // Skip header row
+            const sortedRows = rows.sort((a, b) => {
+                const aCount = parseInt(a.cells[2].textContent);
+                const bCount = parseInt(b.cells[2].textContent);
+                return bCount - aCount;
+            });
+            const tbody = table.querySelector("tbody");
+            sortedRows.forEach(row => tbody.appendChild(row));
+        }
     </script>
 </body>
 </html>
