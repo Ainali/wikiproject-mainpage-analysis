@@ -1090,11 +1090,20 @@
                     filteredData = filteredData.filter(d => d.itemLabel === selectedWikiProject);
                 }
 
-                const groupedData = d3.nest()
-                    .key(d => selectedLanguage === 'all' ? 'all' : d.language)
-                    .key(d => d.itemLabel)
-                    .rollup(v => d3.sum(v, d => +d.count))
-                    .entries(filteredData);
+                let groupedData;
+                if (selectedWikiProject === 'all') {
+                    groupedData = d3.nest()
+                        .key(d => selectedLanguage === 'all' ? 'all' : d.language)
+                        .key(d => d.itemLabel)
+                        .rollup(v => d3.sum(v, d => +d.count))
+                        .entries(filteredData);
+                } else {
+                    groupedData = d3.nest()
+                        .key(d => d.language)
+                        .rollup(v => d3.sum(v, d => +d.count))
+                        .entries(filteredData)
+                        .map(d => ({ key: d.key, values: [{ key: selectedWikiProject, value: d.value }] }));
+                }
 
                 const tbody = d3.select('#results-table tbody');
                 tbody.selectAll('tr').remove();
@@ -1119,7 +1128,7 @@
         // Load and process data when the page loads
         loadAndProcessData();
 
-         // Function to sort table by Count column
+        // Function to sort table by Count column
         function sortTable() {
             const table = document.getElementById("results-table");
             const rows = Array.from(table.rows).slice(1); // Skip header row
@@ -1134,4 +1143,3 @@
     </script>
 </body>
 </html>
-
