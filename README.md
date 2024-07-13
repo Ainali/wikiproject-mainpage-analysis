@@ -2,9 +2,23 @@
 
 This tool shows the number of links from the mainpage of Wikipedia to an article connected to a WikiProject.
 
-It runs via a GitHub action daily and adds data to a CSV file, one per language and year.
+## How it works
 
-First the script checks for main pages through a SPARQL query. Then for each of those, an API call is made to get the Wikidata IDs for all links to the main namespace. Then these are plugged into another SPARQL query to see to which, if any, WikiProject they are connected to. The result is appended to the CSV file. 
+It runs via a GitHub action daily and adds data to CSV files, one per language and year.
+
+### Getting main page data
+
+First the script gets all mainpages through a SPARQL query.
+Then for each of those, an API call is made to get the Wikidata IDs for all links from the mainpage to articles in the main namespace.
+
+### Find WikiProject connections
+
+The Wikidata IDs are plugged into another SPARQL query to see to which, if any, WikiProjects they are connected to.
+A connection is considered to exist if the items have a value for either of the Wikidata properties *on focus list of Wikimedia project* (P5008) or *maintained by WikiProject* (P6104).
+
+### Summarize
+
+The result is appended to the CSV file, with one line per WikiProject, the number of links and the date.
 
 A summary table is simply published via GitHub pages.
 
