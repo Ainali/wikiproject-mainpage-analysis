@@ -80,7 +80,11 @@ def create_count_table(results):
 # Function to save results to a CSV file
 def save_to_csv(count_table):
     year = datetime.utcnow().year
+    today = datetime.utcnow().date()
     filename = f'data/results_{year}.csv'
+
+    # Add date column
+    count_table['date'] = today
 
     # Check if the file already exists
     if os.path.exists(filename):
