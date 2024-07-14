@@ -717,7 +717,8 @@
             <tr>
                 <th>Language</th>
                 <th>WikiProject</th>
-                <th onclick="sortTable()">Count</th>
+                <th onclick="sortTable(2)">Count</th>
+                <th onclick="sortTable(3)">Days</th>
             </tr>
         </thead>
         <tbody>
@@ -726,6 +727,7 @@
             <tr class="total-row">
                 <td colspan="2">Total</td>
                 <td id="total-count">0</td>
+                <td id="total-days">0</td>
             </tr>
         </tfoot>
     </table>
@@ -1079,6 +1081,7 @@
                 parsedData.forEach(d => {
                     d.year = file.year;
                     d.language = file.language;
+                    d.date = new Date(d.date);
                 });
                 allData = allData.concat(parsedData);
             }
@@ -1139,36 +1142,44 @@
                     groupedData = d3.nest()
                         .key(d => selectedLanguage === 'all' ? 'all' : d.language)
                         .key(d => d.itemLabel)
-                        .rollup(v => d3.sum(v, d => +d.count))
+                        .rollup(v => {
+                            const counts = d3.sum(v, d => +d.count);
+                            const days = new Set(v.map(d => d.date.toISOString().split('T')[0])).size;
+                            return { counts, days };
+                        })
                         .entries(filteredData);
                 } else {
                     groupedData = d3.nest()
                         .key(d => d.language)
-                        .rollup(v => d3.sum(v, d => +d.count))
-                        .entries(filteredData)
-                        .map(d => ({ key: d.key, values: [{ key: selectedWikiProject, value: d.value }] }));
+                        .rollup(v => {
+                            const counts = d3.sum(v, d => +d.count);
+                            const days = new Set(v.map(d => d.date.toISOString().split('T')[0])).size;
+                            return { counts, days };
+                        })
+                        .entries(filteredData);
                 }
 
+                // Update table
                 const tbody = d3.select('#results-table tbody');
                 tbody.selectAll('tr').remove();
 
                 let totalCount = 0;
-                groupedData.forEach(languageGroup => {
-                    languageGroup.values.forEach(projectGroup => {
-                        tbody.append('tr')
-                            .html(`<td>${languageGroup.key}</td><td>${projectGroup.key}</td><td>${projectGroup.value}</td>`);
-                        totalCount += projectGroup.value;
-                    });
+                let totalDays = 0;
+
+                groupedData.forEach(d => {
+                    const key = selectedWikiProject === 'all' ? d.key : selectedWikiProject;
+                    const { counts, days } = d.values || d.value;
+                    tbody.append('tr')
+                        .html(`<td>${selectedLanguage === 'all' ? 'all' : d.key}</td><td>${key}</td><td>${counts}</td><td>${days}</td>`);
+                    totalCount += counts;
+                    totalDays += days;
                 });
 
                 d3.select('#total-count').text(totalCount);
-
-                // Update URL with current selections
-                const newUrl = `${window.location.pathname}?year=${selectedYear}&lang=${selectedLanguage}&wikiproject=${selectedWikiProject}`;
-                window.history.pushState({}, '', newUrl);
+                d3.select('#total-days').text(totalDays);
             }
 
-            // Update table when any dropdown changes
+            // Update table on dropdown change
             yearSelect.on('change', updateTable);
             languageSelect.on('change', updateTable);
             wikiprojectSelect.on('change', updateTable);
@@ -1177,20 +1188,29 @@
             updateTable();
         }
 
-        // Load and process data when the page loads
         loadAndProcessData();
 
-        // Function to sort table by Count column
-        function sortTable() {
+        function sortTable(columnIndex) {
             const table = document.getElementById("results-table");
-            const rows = Array.from(table.rows).slice(1, -1); // Skip header row and total row
-            const sortedRows = rows.sort((a, b) => {
-                const aCount = parseInt(a.cells[2].textContent);
-                const bCount = parseInt(b.cells[2].textContent);
-                return bCount - aCount;
+            const rows = Array.from(table.rows).slice(1); // Exclude the header row
+
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.cells[columnIndex].textContent;
+                const cellB = rowB.cells[columnIndex].textContent;
+
+                const valueA = isNaN(cellA) ? cellA : parseFloat(cellA);
+                const valueB = isNaN(cellB) ? cellB : parseFloat(cellB);
+
+                if (valueA < valueB) {
+                    return -1;
+                } else if (valueA > valueB) {
+                    return 1;
+                } else {
+                    return 0;
+                }
             });
-            const tbody = table.querySelector("tbody");
-            sortedRows.forEach(row => tbody.appendChild(row));
+
+            rows.forEach(row => table.appendChild(row));
         }
     </script>
 </body>
