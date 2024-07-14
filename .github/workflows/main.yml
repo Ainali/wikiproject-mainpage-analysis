@@ -7,11 +7,11 @@ on:
     - cron: "0 12 * * *"
 
 jobs:
-  fetch_data:
+  fetch_and_process_data:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository content
+    - name: Checkout repository
       uses: actions/checkout@v2
 
     - name: Set up Python
@@ -20,21 +20,26 @@ jobs:
         python-version: '3.x'
 
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests SPARQLWrapper pandas
+      run: pip install d3 pandas requests SPARQLWrapper
 
-    - name: Run the Python script
+    - name: Run data fetch script
       run: python scripts/fetch_wikipedia_data.py
+
+    - name: Update timestamp in index.html
+      run: |
+        today=$(date -u +"%Y-%m-%d")
+        sed -i "s|<footer>.*</footer>|<footer>Data last updated: $today</footer>|g" index.html
 
     - name: Commit and push changes
       run: |
-        git diff
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add .
-        git commit -m "Daily data fetch"
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data/*.csv index.html
+        git commit -m "Update data and timestamp"
         git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: . # Assuming index.html and data are in the root directory
