@@ -1105,6 +1105,16 @@
                 .attr('value', d => d)
                 .text(d => d);
 
+            // Set dropdown values based on URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const selectedYear = urlParams.get('year') || 'all';
+            const selectedLanguage = urlParams.get('lang') || 'all';
+            const selectedWikiProject = urlParams.get('wikiproject') || 'all';
+
+            yearSelect.property('value', selectedYear);
+            languageSelect.property('value', selectedLanguage);
+            wikiprojectSelect.property('value', selectedWikiProject);
+
             // Function to update the table based on the selected filters
             function updateTable() {
                 const selectedYear = yearSelect.property('value');
@@ -1151,6 +1161,10 @@
                 });
 
                 d3.select('#total-count').text(totalCount);
+
+                // Update URL with current selections
+                const newUrl = `${window.location.pathname}?year=${selectedYear}&lang=${selectedLanguage}&wikiproject=${selectedWikiProject}`;
+                window.history.pushState({}, '', newUrl);
             }
 
             // Update table when any dropdown changes
