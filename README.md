@@ -8,19 +8,22 @@ It runs via a GitHub action daily and adds data to CSV files, one per language a
 
 ### Getting main page data
 
-First the script gets all mainpages through a SPARQL query.
-Then for each of those, an API call is made to get the Wikidata IDs for all links from the mainpage to articles in the main namespace.
+First the script gets all mainpages through a SPARQL query that collects all Wikipedia sitelinks on the item [Q5296](https://www.wikidata.org/wiki/Q5296) (and the language codes of those wikis).
+Then for each of those, an API call is made to get the Wikidata IDs for all links from the mainpage to articles in the main namespace. Example for Swedish Wikipedia:
+
+`https://sv.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&titles=Portal%3AHuvudsida&generator=links&formatversion=2&ppcontinue=&ppprop=wikibase_item&gplnamespace=0&gpllimit=max`
+[Try it!](https://sv.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&titles=Portal%3AHuvudsida&generator=links&formatversion=2&ppcontinue=&ppprop=wikibase_item&gplnamespace=0&gpllimit=max)
 
 ### Find WikiProject connections
 
 The Wikidata IDs are plugged into another SPARQL query to see to which, if any, WikiProjects they are connected to.
-A connection is considered to exist if the items have a value for either of the Wikidata properties *on focus list of Wikimedia project* (P5008) or *maintained by WikiProject* (P6104).
+A connection is considered to exist if the items have a value for either of the Wikidata properties [on focus list of Wikimedia project (P5008)](https://www.wikidata.org/wiki/Property:P5008) or [maintained by WikiProject (P6104)](https://www.wikidata.org/wiki/Property:P6104).
 
 ### Summarize
 
-The result is appended to the CSV file, with one line per WikiProject, the number of links and the date.
+The result is appended to a CSV file, with one line per WikiProject, the number of links for each of those and the retrieve date.
 
-A summary table is simply published via GitHub pages.
+A summary table with filters for year, language and WikiProject is published via GitHub pages.
 
 The aggregation is done in the browser when the user has made a selection.
 
