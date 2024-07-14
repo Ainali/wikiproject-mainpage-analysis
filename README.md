@@ -23,3 +23,10 @@ The result is appended to the CSV file, with one line per WikiProject, the numbe
 A summary table is simply published via GitHub pages.
 
 The aggregation is done in the browser when the user has made a selection.
+
+## License
+
+The code is under [GPL V3](LICENSE).
+
+All data in the data folder is dedicated to the public domain, marked by [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0), which allows users worldwide to distribute, remix, adapt, and build upon the data in any medium or format, with no legal conditions on reuse. 
+Attribution is suggested as "Data from the [WikiProject Mainpage Analysis](https://github.com/Ainali/wikiproject-mainpage-analysis)".
