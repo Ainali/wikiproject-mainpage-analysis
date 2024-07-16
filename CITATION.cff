@@ -1,0 +1,23 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: WikiProject Mainpage Analysis
+message: >-
+  If you use this data, please cite it using the metadata
+  from this file.
+type: dataset
+authors:
+  - given-names: Jan
+    family-names: Ainali
+    orcid: 'https://orcid.org/0000-0001-8747-1670'
+repository-code: 'https://github.com/Ainali/wikiproject-mainpage-analysis'
+url: 'https://ainali.github.io/wikiproject-mainpage-analysis/'
+abstract: >-
+  This tool shows the number of links from the mainpage of
+  the different Wikipedia language versions to an article
+  connected to a WikiProject.
+keywords:
+  - Wikipedia
+  - topic analysis
+license: CC0-1.0
